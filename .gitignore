@@ -1,3 +1,19 @@
+# database
+budget.db
+
+# macos
+.DS_Store
+
+# pyenv
+pyvenv.cfg
+
+# venv
+bin/
+share/
+
+# vscode
+.vscode/
+        
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
