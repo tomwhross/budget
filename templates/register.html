@@ -5,22 +5,72 @@ Log In
 {% endblock %}
 
 {% block main %}
+<div class="alert alert-warning" role="alert" name="general_alert" id="general_alert" style="display: none; visibility: hidden">
+    Please provide a username
+</div>
 <form action="/register" method="post">
     <div class="form-group">
-        <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
+        <input autocomplete="off" autofocus class="form-control" name="username" id="username" placeholder="Username" type="text"
+            onkeyup="enableSubmit(); displayAlert();" onchange="enableSubmit(); displayAlert();" onblur="enableSubmit(); displayAlert();">
     </div>
     <div class="form-group">
-        <input autocomplete="off" class="form-control" name="email" placeholder="Email" type="text">
+        <input autocomplete="off" class="form-control" name="email" id="email" placeholder="Email" type="text"
+            onkeyup="enableSubmit(); displayAlert();" onchange="enableSubmit(); displayAlert();" onblur="enableSubmit(); displayAlert();">
     </div>
     <div class="form-group">
-        <input class="form-control" name="password" placeholder="Password" type="password">
+        <input class="form-control" name="password" id="password" placeholder="Password" type="password"
+            onkeyup="enableSubmit(); displayAlert();" onchange="enableSubmit(); displayAlert();" onblur="enableSubmit(); displayAlert();">
     </div>
     <div>
-        <input class="form-control" name="confirm_password" placeholder="Confirm password" type="password">
+        <input class="form-control" name="confirm_password" id="confirm_password" placeholder="Confirm password" type="password"
+            onkeyup="enableSubmit(); displayAlert();" onchange="enableSubmit(); displayAlert();" onblur="enableSubmit(); displayAlert();">
     </div>
     <div>
         <br>
-        <button class="btn btn-primary" type="submit">Register</button>
+        <button class="btn btn-primary" type="submit" name="register" id="submit" disabled>Register</button>
     </div>
 </form>
+
+<script>
+    let submit = document.querySelector("#submit");
+
+    function enableSubmit() {
+        let username = document.querySelector("#username").value
+        let email = document.querySelector("#email").value
+        let password = document.querySelector("#password").value
+        let confirm_password = document.querySelector("#confirm_password").value
+
+        if (username && email && password && confirm_password) {
+        
+            submit.disabled = false;
+        }
+        else {
+            submit.disabled = true;
+        }
+    }
+
+    let fresh = true;
+
+    function displayAlert() {
+        
+        var alert_message = {{ alert_message | tojson }};
+        let general_alert = document.querySelector("#general_alert")
+        
+        general_alert.style.visibility = "hidden";
+
+        if (alert_message && fresh) {
+            console.log(alert_message);
+            general_alert.innerHTML = alert_message;
+            general_alert.style.display = "block";
+            general_alert.style.visibility = "visible";
+            fresh = false;
+        }
+        else {
+            general_alert.style.visibility = "hidden";
+        }
+    }
+
+    displayAlert();
+
+</script>
 {% endblock %}

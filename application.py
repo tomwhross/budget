@@ -8,11 +8,9 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from constants import DB
 from helpers import apology, login_required, touch, usd
-from models import db, User
-
-
-DB = "budget.db"
+from models import db, Bucket, User
 
 
 def create_app():
@@ -29,7 +27,6 @@ def create_app():
     app.config["SESSION_FILE_DIR"] = mkdtemp()
     app.config["SESSION_PERMANENT"] = False
     app.config["SESSION_TYPE"] = "filesystem"
-    Session(app)
 
     # configure the db
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB}"
@@ -39,6 +36,7 @@ def create_app():
 
 
 app = create_app()
+Session(app)
 
 
 def initialize_db():
@@ -123,30 +121,40 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
+
+    alert_message = ""
+
     if request.method == "GET":
-        return render_template("register.html")
+        return render_template("register.html", alert_message=alert_message)
 
     username = request.form.get("username")
     email = request.form.get("email")
     password = request.form.get("password")
     confirm_password = request.form.get("confirm_password")
-    if not username:
-        return apology("must provide username", 418)
-
-    if not password:
-        return apology("must provide password", 418)
 
     if not confirm_password:
-        return apology("must confirm password", 418)
+        alert_message = "You must confirm your password"
+
+    if not password:
+        alert_message = "You must provide a password"
+
+    if not email:
+        alert_message = "You must provide an email address"
+
+    if not username:
+        alert_message = "You must provide a username"
 
     if password != confirm_password:
-        return apology("passwords did not match", 418)
+        alert_message = "Your passwords must match"
+
+    if alert_message:
+        return render_template("register.html", alert_message=alert_message)
 
     with app.app_context():
         check = User.query.filter_by(username=username).first()
 
     if check:
-        return apology("username already taken", 418)
+        return render_template("register.html", alert_message="Username already taken")
 
     hashed_password = generate_password_hash(password)
 
@@ -158,8 +166,30 @@ def register():
         modified_date=datetime.utcnow(),
     )
 
-    with app.app_context():
-        db.session.add(user)
-        db.session.commit()
+    try:
+        with app.app_context():
+            db.session.add(user)
+            db.session.commit()
+    except:
+        return apology("Something went wrong")
 
     return redirect("/login")
+
+
+@app.route("/buckets", methods=["GET", "POST"])
+@login_required
+def manage_buckets():
+    """
+    Manage expense buckets
+    """
+    alert_message = ""
+
+    if request.method == "GET":
+        with app.app_context():
+            buckets = Bucket.query.filter_by(user_id=session["user_id"]).all()
+
+            print(buckets)
+
+        return render_template(
+            "index.html", alert_message=alert_message, buckets=buckets
+        )
