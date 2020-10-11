@@ -236,6 +236,7 @@ def edit_bucket():
     bucket_id = request.form.get("edit")
     name = request.form.get("name")
     description = request.form.get("description")
+    expense_type = request.form.get("expense_type")
 
     with app.app_context():
         bucket = Bucket.query.filter_by(
@@ -243,6 +244,7 @@ def edit_bucket():
         ).first()
         bucket.name = name
         bucket.description = description
+        bucket.expense_type = expense_type
         bucket.modified_date = datetime.utcnow()
         db.session.commit()
 
