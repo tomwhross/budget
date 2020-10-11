@@ -187,6 +187,68 @@ def register():
     return redirect("/login")
 
 
+@app.route("/add_bucket", methods=["GET", "POST"])
+@login_required
+def add_bucket():
+    if request.method == "GET":
+        return render_template("add_bucket.html")
+
+    # POST
+
+    name = request.form.get("name")
+    description = request.form.get("description")
+    expense_type = request.form.get("expense_type")
+
+    with app.app_context():
+        bucket = Bucket(
+            name=name,
+            description=description,
+            expense_type=expense_type,
+            created_date=datetime.utcnow(),
+            modified_date=datetime.utcnow(),
+            user_id=session["user_id"],
+        )
+        db.session.add(bucket)
+        db.session.commit()
+
+    return redirect("/buckets")
+
+
+@app.route("/delete_bucket", methods=["POST"])
+@login_required
+def delete_bucket():
+    bucket_id = request.form.get("delete")
+
+    print(bucket_id)
+
+    with app.app_context():
+        bucket = Bucket.query.filter_by(id=bucket_id).first()
+        print(bucket.name)
+        db.session.delete(bucket)
+        db.session.commit()
+
+    return redirect("/buckets")
+
+
+@app.route("/edit_bucket", methods=["POST"])
+@login_required
+def edit_bucket():
+    bucket_id = request.form.get("edit")
+    name = request.form.get("name")
+    description = request.form.get("description")
+
+    with app.app_context():
+        bucket = Bucket.query.filter_by(
+            id=bucket_id, user_id=session["user_id"]
+        ).first()
+        bucket.name = name
+        bucket.description = description
+        bucket.modified_date = datetime.utcnow()
+        db.session.commit()
+
+    return redirect("/buckets")
+
+
 @app.route("/buckets", methods=["GET", "POST"])
 @login_required
 def manage_buckets():
@@ -202,5 +264,14 @@ def manage_buckets():
             print(buckets)
 
         return render_template(
-            "index.html", alert_message=alert_message, buckets=buckets
+            "buckets.html", alert_message=alert_message, buckets=buckets
         )
+
+    if request.method == "POST":
+        bucket_id = request.form.get("edit")
+        with app.app_context():
+            bucket = Bucket.query.filter_by(id=bucket_id).first()
+
+        print(bucket.name)
+
+        return render_template("edit_bucket.html", bucket=bucket)

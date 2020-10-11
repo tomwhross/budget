@@ -37,6 +37,16 @@
         <div class="collapse navbar-collapse" id="navbar">
             {% if session.user_id %}
             <ul class="navbar-nav mr-auto mt-2">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Expense Buckets
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="/buckets">View & Edit</a>
+                        <a class="dropdown-item" href="/add_bucket">Add</a>
+                    </div>
+                </li>
                 <li class="nav-item"><a class="nav-link" href="/buckets">Buckets</a></li>
                 <li class="nav-item"><a class="nav-link" href="/buy">Entries</a></li>
                 <li class="nav-item"><a class="nav-link" href="/sell">Sell</a></li>

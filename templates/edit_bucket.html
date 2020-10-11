@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Apology
+{% endblock %}
+
+{% block main %}
+<form action="/edit_bucket" method="post">
+    <table class="table">
+        <thead>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="align-middle">ID</td>
+                <td class="align-middle">{{ bucket.id }}</td>
+            </tr>
+            <tr>
+                <td class="align-middle">Name</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="name" id="name" type="text"
+                            value="{{ bucket.name }}">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Description</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="description" id="description"
+                            type="text" value="{{ bucket.description }}">
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <br>
+    <button class="btn btn-primary" type="submit" name="edit" id="edit" value="{{ bucket.id }}"">Edit</button>
+</form>
+{% endblock %}

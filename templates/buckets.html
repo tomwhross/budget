@@ -8,22 +8,41 @@ Log In
 <table class="table table-hover">
     <thead>
         <tr>
+            <th scope="col">ID</th>
             <th scope="col">Name</th>
             <th scope="col">Description</th>
             <th scope="col">Created Date</th>
             <th scope="col">Modified Date</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
         </tr>
     </thead>
     <tbody>
         {% for bucket in buckets %}
         <tr>
-            <td>{{ bucket.name }}</td>
-            <td>{{ bucket.description }}</td>
-            <td>{{ bucket.created_date }}</td>
-            <td>{{ bucket.modified_date }}</td>
-
+            <td class="align-middle">{{ bucket.id }}</td>
+            <td class="align-middle">{{ bucket.name }}</td>
+            <td class="align-middle">{{ bucket.description }}</td>
+            <td class="align-middle">{{ bucket.created_date }}</td>
+            <td class="align-middle">{{ bucket.modified_date }}</td>
+            <td>
+                <form action="/buckets" method="post">
+                    <button class="btn btn-primary" type="submit" name="edit" id="edit" value="{{ bucket.id }}" onclick="editBucket({{ bucket.id }});">Edit</button>
+                </form>
+            </td>
+            <td>
+                <form action="/delete_bucket" method="post">
+                    <button class="btn btn-primary" type="submit" name="delete" id="delete" value="{{ bucket.id }}" onclick="editBucket({{ bucket.id }});">Delete</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+<script>
+    function editBucket(id) {
+        console.log(id);
+    }
+</script>
+
 {% endblock %}

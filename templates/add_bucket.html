@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Apology
+{% endblock %}
+
+{% block main %}
+<form action="/add_bucket" method="post">
+    <table class="table">
+        <thead>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="align-middle">Name</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="name" id="name" type="text"
+                            placeholder="Name">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Description</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="description" id="description"
+                            type="text" placeholder="Description">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Type</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <select id="expense_type" name="expense_type">
+                            <option value="expense">Expense (-)</option>
+                            <option value="income">Income (+)</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <br>
+    <button class="btn btn-primary" type="submit" name="add" id="add">Add</button>
+</form>
+{% endblock %}

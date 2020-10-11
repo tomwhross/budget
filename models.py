@@ -21,6 +21,7 @@ class Bucket(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), unique=False, nullable=False)
     description = db.Column(db.String(255), unique=False, nullable=False)
+    expense_type = db.Column(db.String(15), unique=False, nullable=False)
     created_date = db.Column(db.DateTime, nullable=False)
     modified_date = db.Column(db.DateTime, nullable=False)
 
