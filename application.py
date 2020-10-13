@@ -100,7 +100,7 @@ def after_request(response):
 @login_required
 def index():
     with app.app_context():
-        user = User.query.filter_by(id=session["user_id"])
+        user = User.query.filter_by(id=session["user_id"]).scalar()
 
         entries = (
             db.session.query(
@@ -110,14 +110,11 @@ def index():
             )
             .join(Entry.category)
             .join(Category.account)
-            .join(Entry.user)
-            .filter(User.id == session["user_id"])
+            .filter(Account.user_id == session["user_id"])
             .group_by(Category.id)
         )
 
-    return render_template(
-        "index.html", user_email=user.value("email"), entries=entries
-    )
+    return render_template("index.html", username=user.username, entries=entries)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -290,9 +287,14 @@ def add_account():
     Add account
     """
     if request.method == "GET":
+        user = User.query.filter_by(id=session["user_id"]).scalar()
         account_types = AccountType.query.all()
 
-        return render_template("add_account.html", account_types=account_types)
+        return render_template(
+            "add_account.html",
+            username=user.username,
+            account_types=account_types,
+        )
 
     # POST
 
@@ -374,6 +376,8 @@ def manage_accounts():
     """
     alert_message = ""
 
+    user = User.query.filter_by(id=session["user_id"]).scalar()
+
     if request.method == "GET":
         with app.app_context():
             accounts = (
@@ -383,7 +387,10 @@ def manage_accounts():
             )
 
         return render_template(
-            "accounts.html", alert_message=alert_message, accounts=accounts
+            "accounts.html",
+            username=user.username,
+            alert_message=alert_message,
+            accounts=accounts,
         )
 
     # POST
@@ -399,7 +406,10 @@ def manage_accounts():
         account_types = AccountType.query.all()
 
     return render_template(
-        "edit_account.html", account=account, account_types=account_types
+        "edit_account.html",
+        username=user.username,
+        account=account,
+        account_types=account_types,
     )
 
 
@@ -410,11 +420,15 @@ def add_category():
     Add categories
     """
     if request.method == "GET":
+        user = User.query.filter_by(id=session["user_id"]).scalar()
         category_types = CategoryType.query.all()
         accounts = Account.query.filter_by(user_id=session["user_id"]).all()
 
         return render_template(
-            "add_category.html", category_types=category_types, accounts=accounts
+            "add_category.html",
+            username=user.username,
+            category_types=category_types,
+            accounts=accounts,
         )
 
     # POST
@@ -497,6 +511,8 @@ def manage_categories():
     """
     alert_message = ""
 
+    user = User.query.filter_by(id=session["user_id"]).scalar()
+
     if request.method == "GET":
         with app.app_context():
             categories = (
@@ -507,7 +523,10 @@ def manage_categories():
             )
 
         return render_template(
-            "categories.html", alert_message=alert_message, categories=categories
+            "categories.html",
+            username=user.username,
+            alert_message=alert_message,
+            categories=categories,
         )
 
     if request.method == "POST":
@@ -525,6 +544,7 @@ def manage_categories():
 
         return render_template(
             "edit_category.html",
+            username=user.username,
             category=category,
             category_types=category_types,
             accounts=accounts,
@@ -554,9 +574,12 @@ def add_entry():
     Add entries
     """
     if request.method == "GET":
+        user = User.query.filter_by(id=session["user_id"]).scalar()
         categories = Category.query.filter_by(user_id=session["user_id"]).all()
 
-        return render_template("add_entry.html", categories=categories)
+        return render_template(
+            "add_entry.html", username=user.username, categories=categories
+        )
 
     # POST
 
@@ -614,6 +637,8 @@ def manage_entries():
     """
     alert_message = ""
 
+    user = User.query.filter_by(id=session["user_id"]).scalar()
+
     if request.method == "GET":
         with app.app_context():
             entries = (
@@ -625,7 +650,10 @@ def manage_entries():
             # categories = Category.query.filter_by(user_id=session["user_id"]).all()
 
         return render_template(
-            "entries.html", alert_message=alert_message, entries=entries
+            "entries.html",
+            username=user.username,
+            alert_message=alert_message,
+            entries=entries,
         )
 
     if request.method == "POST":
@@ -640,5 +668,8 @@ def manage_entries():
             category_types = CategoryType.query.all()
 
         return render_template(
-            "edit_category.html", category=category, category_types=category_types
+            "edit_category.html",
+            username=user.username,
+            category=category,
+            category_types=category_types,
         )
