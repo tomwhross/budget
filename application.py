@@ -102,13 +102,6 @@ def index():
     with app.app_context():
         user = User.query.filter_by(id=session["user_id"])
 
-        # entries = (
-        #     Entry.query.options(joinedload("category"))
-        #     .filter(User.id == session["user_id"])
-        #     .group_by(Entry.category_id)
-        #     .all()
-        # )
-
         entries = (
             db.session.query(
                 (Category.name).label("category_name"),
@@ -121,14 +114,6 @@ def index():
             .filter(User.id == session["user_id"])
             .group_by(Category.id)
         )
-
-    #     import pdb
-
-    #     pdb.set_trace()
-
-    # import pdb
-
-    # pdb.set_trace()
 
     return render_template(
         "index.html", user_email=user.value("email"), entries=entries
@@ -220,7 +205,7 @@ def register():
         return render_template("register.html", alert_message=alert_message)
 
     with app.app_context():
-        check = User.query.filter_by(username=username).first()
+        check = User.query.filter_by(username=username).scalar()
 
     if check:
         return render_template("register.html", alert_message="Username already taken")
@@ -236,11 +221,11 @@ def register():
     )
 
     with app.app_context():
-        chequing_account_type = AccountType.query.filter_by(name="Chequing").first()
-        savings_account_type = AccountType.query.filter_by(name="Savings").first()
+        chequing_account_type = AccountType.query.filter_by(name="Chequing").scalar()
+        savings_account_type = AccountType.query.filter_by(name="Savings").scalar()
 
-        income_category_type = CategoryType.query.filter_by(name="Income").first()
-        expense_category_type = CategoryType.query.filter_by(name="Expense").first()
+        income_category_type = CategoryType.query.filter_by(name="Income").scalar()
+        expense_category_type = CategoryType.query.filter_by(name="Expense").scalar()
 
     # setup default accounts and categoies
     chequing = Account(
@@ -317,7 +302,7 @@ def add_account():
     initial_amount = request.form.get("initial_amount")
 
     with app.app_context():
-        account_type = AccountType.query.filter_by(id=account_type_id).first()
+        account_type = AccountType.query.filter_by(id=account_type_id).scalar()
         account = Account(
             name=name,
             description=description,
@@ -342,7 +327,7 @@ def delete_account():
     account_id = request.form.get("delete")
 
     with app.app_context():
-        account = Account.query.filter_by(id=account_id).first()
+        account = Account.query.filter_by(id=account_id).scalar()
         db.session.delete(account)
         db.session.commit()
 
@@ -366,10 +351,10 @@ def edit_account():
             Account.query.options(joinedload("account_type"))
             .filter(Account.id == account_id)
             .filter(User.id == session["user_id"])
-            .first()
+            .scalar()
         )
 
-        account_type = AccountType.query.filter_by(id=account_type_id).first()
+        account_type = AccountType.query.filter_by(id=account_type_id).scalar()
 
         account.name = name
         account.description = description
@@ -409,7 +394,7 @@ def manage_accounts():
             Account.query.options(joinedload("account_type"))
             .filter(Account.user_id == session["user_id"])
             .filter(Account.id == account_id)
-            .first()
+            .scalar()
         )
         account_types = AccountType.query.all()
 
@@ -440,8 +425,8 @@ def add_category():
     account_id = request.form.get("account")
 
     with app.app_context():
-        category_type = CategoryType.query.filter_by(id=category_type_id).first()
-        account = Account.query.filter_by(id=account_id).first()
+        category_type = CategoryType.query.filter_by(id=category_type_id).scalar()
+        account = Account.query.filter_by(id=account_id).scalar()
         category = Category(
             name=name,
             description=description,
@@ -466,7 +451,7 @@ def delete_category():
     category_id = request.form.get("delete")
 
     with app.app_context():
-        category = Category.query.filter_by(id=category_id).first()
+        category = Category.query.filter_by(id=category_id).scalar()
         db.session.delete(category)
         db.session.commit()
 
@@ -487,12 +472,12 @@ def edit_category():
             Category.query.options(joinedload("category_type"))
             .options(joinedload("account"))
             .filter(Category.id == category_id)
-            .filter(User.id == session["user_id"])
-            .first()
+            .filter(Category.user_id == session["user_id"])
+            .scalar()
         )
 
-        category_type = CategoryType.query.filter_by(id=category_type_id).first()
-        account = Account.query.filter_by(id=account_id).first()
+        category_type = CategoryType.query.filter_by(id=category_type_id).scalar()
+        account = Account.query.filter_by(id=account_id).scalar()
 
         category.name = name
         category.description = description
@@ -517,7 +502,7 @@ def manage_categories():
             categories = (
                 Category.query.options(joinedload("category_type"))
                 .options(joinedload("account"))
-                .filter(User.id == session["user_id"])
+                .filter(Category.user_id == session["user_id"])
                 .all()
             )
 
@@ -531,9 +516,9 @@ def manage_categories():
             category = (
                 Category.query.options(joinedload("category_type"))
                 .options(joinedload("account"))
-                .filter(User.id == session["user_id"])
+                .filter(Category.user_id == session["user_id"])
                 .filter(Category.id == category_id)
-                .first()
+                .scalar()
             )
             category_types = CategoryType.query.all()
             accounts = Account.query.filter_by(user_id=session["user_id"]).all()
@@ -555,7 +540,7 @@ def delete_entry():
     entry_id = request.form.get("delete")
 
     with app.app_context():
-        entry = Entry.query.filter_by(id=entry_id).first()
+        entry = Entry.query.filter_by(id=entry_id).scalar()
         db.session.delete(entry)
         db.session.commit()
 
@@ -579,7 +564,7 @@ def add_entry():
     amount = request.form.get("amount")
 
     with app.app_context():
-        category = Category.query.filter_by(id=category).first()
+        category = Category.query.filter_by(id=category).scalar()
         entry = Entry(
             description="description",
             amount=amount,
@@ -610,7 +595,7 @@ def edit_entry():
             Entry.query.options(joinedload("category"))
             .filter(Entry.id == entry_id)
             .filter(User.id == session["user_id"])
-            .first()
+            .scalar()
         )
 
         entry.amount = amount
@@ -633,7 +618,7 @@ def manage_entries():
         with app.app_context():
             entries = (
                 Entry.query.options(joinedload("category"))
-                .filter(User.id == session["user_id"])
+                .filter(Entry.user_id == session["user_id"])
                 .all()
             )
             # categories = Category.query.options(joinedload('category_type')).all()
@@ -648,9 +633,9 @@ def manage_entries():
         with app.app_context():
             category = (
                 Category.query.options(joinedload("category_type"))
-                .filter(User.id == session["user_id"])
+                .filter(Category.user_id == session["user_id"])
                 .filter(Category.id == category_id)
-                .first()
+                .scalar()
             )
             category_types = CategoryType.query.all()
 
