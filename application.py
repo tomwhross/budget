@@ -4,13 +4,15 @@ from datetime import datetime
 from flask import Flask, redirect, render_template, request, session
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from constants import DB
 from helpers import apology, login_required, touch, usd
-from models import db, Bucket, User
+from models import db, Account, AccountType, Category, CategoryType, Entry, User
 
 
 def create_app():
@@ -30,6 +32,7 @@ def create_app():
 
     # configure the db
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB}"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
     db.init_app(app)
 
     return app
@@ -45,6 +48,7 @@ def initialize_db():
     )
 
     if response[0].upper() != "Y":
+        print("    |")
         print("    ----> Action cancelled")
         return
 
@@ -55,9 +59,31 @@ def initialize_db():
 
     touch(DB)
 
+    chequing_account = AccountType(
+        name="Chequing",
+        created_date=datetime.utcnow(),
+        modified_date=datetime.utcnow(),
+    )
+    savings_account = AccountType(
+        name="Savings", created_date=datetime.utcnow(), modified_date=datetime.utcnow()
+    )
+
+    income_category = CategoryType(
+        name="Income", created_date=datetime.utcnow(), modified_date=datetime.utcnow()
+    )
+    expense_category = CategoryType(
+        name="Expense", created_date=datetime.utcnow(), modified_date=datetime.utcnow()
+    )
+
     with app.app_context():
         db.create_all()
+        db.session.add(chequing_account)
+        db.session.add(savings_account)
+        db.session.add(income_category)
+        db.session.add(expense_category)
+        db.session.commit()
 
+    print("    |")
     print("    ----> Action completed")
 
 
@@ -76,7 +102,37 @@ def index():
     with app.app_context():
         user = User.query.filter_by(id=session["user_id"])
 
-    return render_template("index.html", user_email=user.value("email"))
+        # entries = (
+        #     Entry.query.options(joinedload("category"))
+        #     .filter(User.id == session["user_id"])
+        #     .group_by(Entry.category_id)
+        #     .all()
+        # )
+
+        entries = (
+            db.session.query(
+                (Category.name).label("category_name"),
+                (Account.name).label("account_name"),
+                func.sum(Entry.amount).label("amount"),
+            )
+            .join(Entry.category)
+            .join(Category.account)
+            .join(Entry.user)
+            .filter(User.id == session["user_id"])
+            .group_by(Category.id)
+        )
+
+    #     import pdb
+
+    #     pdb.set_trace()
+
+    # import pdb
+
+    # pdb.set_trace()
+
+    return render_template(
+        "index.html", user_email=user.value("email"), entries=entries
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -134,8 +190,10 @@ def register():
     """Register user"""
 
     alert_message = ""
+    session.clear()
 
     if request.method == "GET":
+
         return render_template("register.html", alert_message=alert_message)
 
     username = request.form.get("username")
@@ -177,9 +235,62 @@ def register():
         modified_date=datetime.utcnow(),
     )
 
+    with app.app_context():
+        chequing_account_type = AccountType.query.filter_by(name="Chequing").first()
+        savings_account_type = AccountType.query.filter_by(name="Savings").first()
+
+        income_category_type = CategoryType.query.filter_by(name="Income").first()
+        expense_category_type = CategoryType.query.filter_by(name="Expense").first()
+
+    # setup default accounts and categoies
+    chequing = Account(
+        name="Chequing",
+        description="Chequing and debit deposit account",
+        initial_amount=0,
+        created_date=datetime.utcnow(),
+        modified_date=datetime.utcnow(),
+        user=user,
+        account_type=chequing_account_type,
+    )
+
+    savings = Account(
+        name="Savings",
+        description="Savings account",
+        initial_amount=0,
+        created_date=datetime.utcnow(),
+        modified_date=datetime.utcnow(),
+        user=user,
+        account_type=savings_account_type,
+    )
+
+    income = Category(
+        name="Income",
+        description="Salary and wage income",
+        created_date=datetime.utcnow(),
+        modified_date=datetime.utcnow(),
+        user=user,
+        category_type=income_category_type,
+        account=chequing,
+    )
+
+    misc = Category(
+        name="Misc",
+        description="Miscellaneous expense items",
+        created_date=datetime.utcnow(),
+        modified_date=datetime.utcnow(),
+        user=user,
+        category_type=expense_category_type,
+        account=chequing,
+    )
+
     try:
         with app.app_context():
             db.session.add(user)
+            db.session.add(chequing)
+            db.session.add(savings)
+            db.session.add(income)
+            db.session.add(misc)
+
             db.session.commit()
     except:
         return apology("Something went wrong")
@@ -187,93 +298,362 @@ def register():
     return redirect("/login")
 
 
-@app.route("/add_bucket", methods=["GET", "POST"])
+@app.route("/add_account", methods=["GET", "POST"])
 @login_required
-def add_bucket():
+def add_account():
+    """
+    Add account
+    """
     if request.method == "GET":
-        return render_template("add_bucket.html")
+        account_types = AccountType.query.all()
+
+        return render_template("add_account.html", account_types=account_types)
 
     # POST
 
     name = request.form.get("name")
     description = request.form.get("description")
-    expense_type = request.form.get("expense_type")
+    account_type_id = request.form.get("account_type")
+    initial_amount = request.form.get("initial_amount")
 
     with app.app_context():
-        bucket = Bucket(
+        account_type = AccountType.query.filter_by(id=account_type_id).first()
+        account = Account(
             name=name,
             description=description,
-            expense_type=expense_type,
+            initial_amount=initial_amount,
             created_date=datetime.utcnow(),
             modified_date=datetime.utcnow(),
             user_id=session["user_id"],
+            account_type=account_type,
         )
-        db.session.add(bucket)
+        db.session.add(account)
         db.session.commit()
 
-    return redirect("/buckets")
+    return redirect("/accounts")
 
 
-@app.route("/delete_bucket", methods=["POST"])
+@app.route("/delete_account", methods=["POST"])
 @login_required
-def delete_bucket():
-    bucket_id = request.form.get("delete")
-
-    print(bucket_id)
+def delete_account():
+    """
+    Delete account
+    """
+    account_id = request.form.get("delete")
 
     with app.app_context():
-        bucket = Bucket.query.filter_by(id=bucket_id).first()
-        print(bucket.name)
-        db.session.delete(bucket)
+        account = Account.query.filter_by(id=account_id).first()
+        db.session.delete(account)
         db.session.commit()
 
-    return redirect("/buckets")
+    return redirect("/accounts")
 
 
-@app.route("/edit_bucket", methods=["POST"])
+@app.route("/edit_account", methods=["POST"])
 @login_required
-def edit_bucket():
-    bucket_id = request.form.get("edit")
+def edit_account():
+    """
+    Edit account
+    """
+    account_id = request.form.get("edit")
+    account_type_id = request.form.get("account_type")
     name = request.form.get("name")
     description = request.form.get("description")
-    expense_type = request.form.get("expense_type")
+    initial_amount = request.form.get("initial_amount")
 
     with app.app_context():
-        bucket = Bucket.query.filter_by(
-            id=bucket_id, user_id=session["user_id"]
-        ).first()
-        bucket.name = name
-        bucket.description = description
-        bucket.expense_type = expense_type
-        bucket.modified_date = datetime.utcnow()
+        account = (
+            Account.query.options(joinedload("account_type"))
+            .filter(Account.id == account_id)
+            .filter(User.id == session["user_id"])
+            .first()
+        )
+
+        account_type = AccountType.query.filter_by(id=account_type_id).first()
+
+        account.name = name
+        account.description = description
+        account.account_type = account_type
+        account.initial_amount = initial_amount
+        account.modified_date = datetime.utcnow()
         db.session.commit()
 
-    return redirect("/buckets")
+    return redirect("/accounts")
 
 
-@app.route("/buckets", methods=["GET", "POST"])
+@app.route("/accounts", methods=["GET", "POST"])
 @login_required
-def manage_buckets():
+def manage_accounts():
     """
-    Manage expense buckets
+    Manage accounts
     """
     alert_message = ""
 
     if request.method == "GET":
         with app.app_context():
-            buckets = Bucket.query.filter_by(user_id=session["user_id"]).all()
-
-            print(buckets)
+            accounts = (
+                Account.query.options(joinedload("account_type"))
+                .filter(Account.user_id == session["user_id"])
+                .all()
+            )
 
         return render_template(
-            "buckets.html", alert_message=alert_message, buckets=buckets
+            "accounts.html", alert_message=alert_message, accounts=accounts
+        )
+
+    # POST
+
+    account_id = request.form.get("edit")
+    with app.app_context():
+        account = (
+            Account.query.options(joinedload("account_type"))
+            .filter(Account.user_id == session["user_id"])
+            .filter(Account.id == account_id)
+            .first()
+        )
+        account_types = AccountType.query.all()
+
+    return render_template(
+        "edit_account.html", account=account, account_types=account_types
+    )
+
+
+@app.route("/add_category", methods=["GET", "POST"])
+@login_required
+def add_category():
+    """
+    Add categories
+    """
+    if request.method == "GET":
+        category_types = CategoryType.query.all()
+        accounts = Account.query.filter_by(user_id=session["user_id"]).all()
+
+        return render_template(
+            "add_category.html", category_types=category_types, accounts=accounts
+        )
+
+    # POST
+
+    name = request.form.get("name")
+    description = request.form.get("description")
+    category_type_id = request.form.get("category_type")
+    account_id = request.form.get("account")
+
+    with app.app_context():
+        category_type = CategoryType.query.filter_by(id=category_type_id).first()
+        account = Account.query.filter_by(id=account_id).first()
+        category = Category(
+            name=name,
+            description=description,
+            created_date=datetime.utcnow(),
+            modified_date=datetime.utcnow(),
+            user_id=session["user_id"],
+            category_type=category_type,
+            account=account,
+        )
+        db.session.add(category)
+        db.session.commit()
+
+    return redirect("/categories")
+
+
+@app.route("/delete_category", methods=["POST"])
+@login_required
+def delete_category():
+    """
+    Delete categories
+    """
+    category_id = request.form.get("delete")
+
+    with app.app_context():
+        category = Category.query.filter_by(id=category_id).first()
+        db.session.delete(category)
+        db.session.commit()
+
+    return redirect("/categories")
+
+
+@app.route("/edit_category", methods=["POST"])
+@login_required
+def edit_category():
+    category_id = request.form.get("edit")
+    category_type_id = request.form.get("category_type")
+    name = request.form.get("name")
+    description = request.form.get("description")
+    account_id = request.form.get("account")
+
+    with app.app_context():
+        category = (
+            Category.query.options(joinedload("category_type"))
+            .options(joinedload("account"))
+            .filter(Category.id == category_id)
+            .filter(User.id == session["user_id"])
+            .first()
+        )
+
+        category_type = CategoryType.query.filter_by(id=category_type_id).first()
+        account = Account.query.filter_by(id=account_id).first()
+
+        category.name = name
+        category.description = description
+        category.category_type = category_type
+        category.modified_date = datetime.utcnow()
+        category.account = account
+        db.session.commit()
+
+    return redirect("/categories")
+
+
+@app.route("/categories", methods=["GET", "POST"])
+@login_required
+def manage_categories():
+    """
+    Manage expense categories
+    """
+    alert_message = ""
+
+    if request.method == "GET":
+        with app.app_context():
+            categories = (
+                Category.query.options(joinedload("category_type"))
+                .options(joinedload("account"))
+                .filter(User.id == session["user_id"])
+                .all()
+            )
+
+        return render_template(
+            "categories.html", alert_message=alert_message, categories=categories
         )
 
     if request.method == "POST":
-        bucket_id = request.form.get("edit")
+        category_id = request.form.get("edit")
         with app.app_context():
-            bucket = Bucket.query.filter_by(id=bucket_id).first()
+            category = (
+                Category.query.options(joinedload("category_type"))
+                .options(joinedload("account"))
+                .filter(User.id == session["user_id"])
+                .filter(Category.id == category_id)
+                .first()
+            )
+            category_types = CategoryType.query.all()
+            accounts = Account.query.filter_by(user_id=session["user_id"]).all()
 
-        print(bucket.name)
+        return render_template(
+            "edit_category.html",
+            category=category,
+            category_types=category_types,
+            accounts=accounts,
+        )
 
-        return render_template("edit_bucket.html", bucket=bucket)
+
+@app.route("/delete_entry", methods=["POST"])
+@login_required
+def delete_entry():
+    """
+    Delete entry
+    """
+    entry_id = request.form.get("delete")
+
+    with app.app_context():
+        entry = Entry.query.filter_by(id=entry_id).first()
+        db.session.delete(entry)
+        db.session.commit()
+
+    return redirect("/entries")
+
+
+@app.route("/add_entry", methods=["GET", "POST"])
+@login_required
+def add_entry():
+    """
+    Add entries
+    """
+    if request.method == "GET":
+        categories = Category.query.filter_by(user_id=session["user_id"]).all()
+
+        return render_template("add_entry.html", categories=categories)
+
+    # POST
+
+    category = request.form.get("category")
+    amount = request.form.get("amount")
+
+    with app.app_context():
+        category = Category.query.filter_by(id=category).first()
+        entry = Entry(
+            description="description",
+            amount=amount,
+            created_date=datetime.utcnow(),
+            modified_date=datetime.utcnow(),
+            effective_date=datetime.utcnow(),
+            user_id=session["user_id"],
+            category=category,
+        )
+        db.session.add(entry)
+        db.session.commit()
+
+    return redirect("/entries")
+
+
+@app.route("/edit_entry", methods=["POST"])
+@login_required
+def edit_entry():
+    """
+    Edit entry
+    """
+    entry_id = request.form.get("edit")
+    amount = request.form.get("amount")
+    effective_date = request.form.get("effective_date")
+
+    with app.app_context():
+        entry = (
+            Entry.query.options(joinedload("category"))
+            .filter(Entry.id == entry_id)
+            .filter(User.id == session["user_id"])
+            .first()
+        )
+
+        entry.amount = amount
+        entry.effective_date = effective_date
+        entry.modified_date = datetime.utcnow()
+        db.session.commit()
+
+    return redirect("/entries")
+
+
+@app.route("/entries", methods=["GET", "POST"])
+@login_required
+def manage_entries():
+    """
+    Manage entries
+    """
+    alert_message = ""
+
+    if request.method == "GET":
+        with app.app_context():
+            entries = (
+                Entry.query.options(joinedload("category"))
+                .filter(User.id == session["user_id"])
+                .all()
+            )
+            # categories = Category.query.options(joinedload('category_type')).all()
+            # categories = Category.query.filter_by(user_id=session["user_id"]).all()
+
+        return render_template(
+            "entries.html", alert_message=alert_message, entries=entries
+        )
+
+    if request.method == "POST":
+        category_id = request.form.get("edit")
+        with app.app_context():
+            category = (
+                Category.query.options(joinedload("category_type"))
+                .filter(User.id == session["user_id"])
+                .filter(Category.id == category_id)
+                .first()
+            )
+            category_types = CategoryType.query.all()
+
+        return render_template(
+            "edit_category.html", category=category, category_types=category_types
+        )

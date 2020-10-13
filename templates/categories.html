@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Categories
+{% endblock %}
+
+{% block main %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Account</th>
+            <th scope="col">Description</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for category in categories %}
+        <tr>
+            <td class="align-middle">{{ category.id }}</td>
+            <td class="align-middle">{{ category.name }}</td>
+            <td class="align-middle">{{ category.category_type.name }}</td>
+            <td class="align-middle">{{ category.account.name }}</td>
+            <td class="align-middle">{{ category.description }}</td>
+            <td>
+                <form action="/categories" method="post">
+                    <button class="btn btn-primary" type="submit" name="edit" id="edit" value="{{ category.id }}"">Edit</button>
+                </form>
+            </td>
+            <td>
+                <form action=" /delete_category" method="post">
+                        <button class="btn btn-primary" type="submit" name="delete" id="delete"
+                            value="{{ category.id }}"">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Entries
+{% endblock %}
+
+{% block main %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Category</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Date</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td class="align-middle">{{ entry.id }}</td>
+            <td class="align-middle">{{ entry.category.name }}</td>
+            <td class="align-middle">{{ entry.amount }}</td>
+            <td class="align-middle">{{ entry.effective_date }}</td>
+            <td>
+                <form action="/entries" method="post">
+                    <button class="btn btn-primary" type="submit" name="edit" id="edit"
+                        value="{{ entry.id }}">Edit</button>
+                </form>
+            </td>
+            <td>
+                <form action=" /delete_entry" method="post">
+                    <button class="btn btn-primary" type="submit" name="delete" id="delete"
+                        value="{{ entry.id }}">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

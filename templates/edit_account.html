@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Edit Account
+{% endblock %}
+
+{% block main %}
+<form action="/edit_account" method="post">
+    <table class="table">
+        <thead>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="align-middle">ID</td>
+                <td class="align-middle">{{ account.id }}</td>
+            </tr>
+            <tr>
+                <td class="align-middle">Name</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="name" id="name" type="text"
+                            value="{{ account.name }}">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Description</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="description" id="description"
+                            type="text" value="{{ account.description }}">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Initial Amount</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="initial_amount"
+                            id="initial_amount" type="number" step="0.01" value="{{ account.initial_amount }}">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Type</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <select id="account_type" name="account_type">
+                            {% for account_type in account_types %}
+                            <option value="{{ account_type.id }}" {% if account.account_type.name==account_type.name %}
+                                selected="selected" {% endif %}>{{ account_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <br>
+    <button class="btn btn-primary" type="submit" name="edit" id="edit" value="{{ account.id }}">Save</button>
+</form>
+{% endblock %}

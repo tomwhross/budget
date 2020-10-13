@@ -1,26 +1,26 @@
 {% extends "layout.html" %}
 
 {% block title %}
-Log In
+Home
 {% endblock %}
 
 {% block main %}
 <table class="table table-hover">
     <thead>
         <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Description</th>
-            <th scope="col">Created Date</th>
+            <th scope="col">Account</th>
+            <th scope="col">Category</th>
+            <th scope="col">Amount</th>
             <th scope="col">Modified Date</th>
         </tr>
     </thead>
     <tbody>
-        {% for bucket in buckets %}
+        {% for entry in entries %}
         <tr>
-            <td>{{ bucket.name }}</td>
-            <td>{{ bucket.description }}</td>
-            <td>{{ bucket.created_date }}</td>
-            <td>{{ bucket.modified_date }}</td>
+            <td>{{ entry.account_name }}</td>
+            <td>{{ entry.category_name }}</td>
+            <td>{{ entry.amount }}</td>
+            <td></td>
 
         </tr>
         {% endfor %}

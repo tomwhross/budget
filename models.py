@@ -17,11 +17,20 @@ class User(db.Model):
         return "<User %r>" % self.username
 
 
+class AccountType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), unique=False, nullable=False)
+    created_date = db.Column(db.DateTime, nullable=False)
+    modified_date = db.Column(db.DateTime, nullable=False)
+
+    def __repr__(self):
+        return "<AccountType %r>" % self.name
+
+
 class Account(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), unique=False, nullable=False)
     description = db.Column(db.String(255), unique=False, nullable=False)
-    account_type = db.Column(db.String(15), unique=False, nullable=False)
     initial_amount = db.Column(db.Numeric(18, 2), unique=False, nullable=False)
     created_date = db.Column(db.DateTime, nullable=False)
     modified_date = db.Column(db.DateTime, nullable=False)
@@ -29,38 +38,64 @@ class Account(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     user = db.relationship("User", backref=db.backref("accounts", lazy=True))
 
+    account_type_id = db.Column(
+        db.Integer, db.ForeignKey("account_type.id"), nullable=False
+    )
+    account_type = db.relationship(
+        "AccountType", backref=db.backref("accounts", lazy=True)
+    )
+
     def __repr__(self):
         return "<Account %r>" % self.name
 
 
-class Bucket(db.Model):
+class CategoryType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), unique=False, nullable=False)
+    created_date = db.Column(db.DateTime, nullable=False)
+    modified_date = db.Column(db.DateTime, nullable=False)
+
+    def __repr__(self):
+        return "<CategoryType %r>" % self.name
+
+
+class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), unique=False, nullable=False)
     description = db.Column(db.String(255), unique=False, nullable=False)
-    expense_type = db.Column(db.String(15), unique=False, nullable=False)
     created_date = db.Column(db.DateTime, nullable=False)
     modified_date = db.Column(db.DateTime, nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    user = db.relationship("User", backref=db.backref("buckets", lazy=True))
+    user = db.relationship("User", backref=db.backref("categories", lazy=True))
+
+    category_type_id = db.Column(
+        db.Integer, db.ForeignKey("category_type.id"), nullable=False
+    )
+    category_type = db.relationship(
+        "CategoryType", backref=db.backref("categories", lazy=True)
+    )
+
+    account_id = db.Column(db.Integer, db.ForeignKey("account.id"), nullable=False)
+    account = db.relationship("Account", backref=db.backref("categories", lazy=True))
 
     def __repr__(self):
-        return "<Bucket %r>" % self.name
+        return "<Category %r>" % self.name
 
 
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(255), unique=False, nullable=False)
-    aamount = db.Column(db.Numeric(18, 2), unique=False, nullable=False)
+    amount = db.Column(db.Numeric(18, 2), unique=False, nullable=False)
     effective_date = db.Column(db.DateTime, nullable=False)
     created_date = db.Column(db.DateTime, nullable=False)
     modified_date = db.Column(db.DateTime, nullable=False)
 
-    bucket_id = db.Column(db.Integer, db.ForeignKey("bucket.id"), nullable=False)
-    bucket = db.relationship("Bucket", backref=db.backref("entries", lazy=True))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user = db.relationship("User", backref=db.backref("entries", lazy=True))
 
-    account_id = db.Column(db.Integer, db.ForeignKey("account.id"), nullable=False)
-    account = db.relationship("Account", backref=db.backref("entries", lazy=True))
+    category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=False)
+    category = db.relationship("Category", backref=db.backref("entries", lazy=True))
 
     def __repr__(self):
         return "<Entry %r - %r>" % self.description, self.effective_date
