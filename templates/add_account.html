@@ -5,6 +5,10 @@ Add Account
 {% endblock %}
 
 {% block main %}
+<div class="alert alert-warning" role="alert" name="general_alert" id="general_alert"
+    style="display: none; visibility: hidden">
+    Please provide an account name
+</div>
 <form action="/add_account" method="post">
     <table class="table">
         <thead>
@@ -15,7 +19,8 @@ Add Account
                 <td class="align-middle">
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="name" id="name" type="text"
-                            placeholder="Name">
+                            placeholder="Name" onkeyup="enableSubmit();" onchange="enableSubmit();"
+                            onblur="enableSubmit();">
                     </div>
                 </td>
             </tr>
@@ -24,7 +29,8 @@ Add Account
                 <td class="align-middle">
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="description" id="description"
-                            type="text" placeholder="Description">
+                            type="text" placeholder="Description" onkeyup="enableSubmit();" onchange="enableSubmit();"
+                            onblur="enableSubmit();">
                     </div>
                 </td>
             </tr>
@@ -33,7 +39,8 @@ Add Account
                 <td class="align-middle">
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="initial_amount"
-                            id="initial_amount" type="number" placeholder="Initial amount">
+                            id="initial_amount" type="number" placeholder="Initial amount" onkeyup="enableSubmit();"
+                            onchange="enableSubmit();" onblur="enableSubmit();">
                     </div>
                 </td>
             </tr>
@@ -52,6 +59,27 @@ Add Account
         </tbody>
     </table>
     <br>
-    <button class="btn btn-primary" type="submit" name="add" id="add">Add</button>
+    <button class="btn btn-primary" type="button" name="add" id="add" disabled>Add</button>
 </form>
+<script>
+    let submit = document.querySelector("#add");
+
+    function enableSubmit() {
+        let name = document.querySelector("#name").value
+        let description = document.querySelector("#description").value
+        let initial_amount = document.querySelector("#initial_amount").value
+
+        console.log(name);
+        console.log(description);
+        console.log(initial_amount);
+
+        if (name && description && initial_amount) {
+
+            submit.disabled = false;
+        }
+        else {
+            submit.disabled = true;
+        }
+    }
+</script>
 {% endblock %}

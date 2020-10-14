@@ -30,8 +30,8 @@ class AccountType(db.Model):
 class Account(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), unique=False, nullable=False)
-    description = db.Column(db.String(255), unique=False, nullable=False)
-    initial_amount = db.Column(db.Numeric(18, 2), unique=False, nullable=False)
+    description = db.Column(db.String(255), unique=False, nullable=True)
+    initial_amount = db.Column(db.Numeric(18, 2), unique=False, nullable=True)
     created_date = db.Column(db.DateTime, nullable=False)
     modified_date = db.Column(db.DateTime, nullable=False)
 
@@ -62,7 +62,8 @@ class CategoryType(db.Model):
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), unique=False, nullable=False)
-    description = db.Column(db.String(255), unique=False, nullable=False)
+    description = db.Column(db.String(255), unique=False, nullable=True)
+    budget_amount = db.Column(db.Numeric(18, 2), unique=False, nullable=True)
     created_date = db.Column(db.DateTime, nullable=False)
     modified_date = db.Column(db.DateTime, nullable=False)
 
@@ -85,9 +86,9 @@ class Category(db.Model):
 
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(255), unique=False, nullable=False)
-    amount = db.Column(db.Numeric(18, 2), unique=False, nullable=False)
-    effective_date = db.Column(db.DateTime, nullable=False)
+    description = db.Column(db.String(255), unique=False, nullable=True)
+    amount = db.Column(db.Numeric(18, 2), unique=False, nullable=True)
+    effective_date = db.Column(db.DateTime, nullable=True)
     created_date = db.Column(db.DateTime, nullable=False)
     modified_date = db.Column(db.DateTime, nullable=False)
 

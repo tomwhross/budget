@@ -19,7 +19,8 @@ Edit Account
                 <td class="align-middle">
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="name" id="name" type="text"
-                            value="{{ account.name }}">
+                            value="{{ account.name }}" onkeyup="enableSubmit();" onchange="enableSubmit();"
+                            onblur="enableSubmit();">
                     </div>
                 </td>
             </tr>
@@ -28,7 +29,8 @@ Edit Account
                 <td class="align-middle">
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="description" id="description"
-                            type="text" value="{{ account.description }}">
+                            type="text" value="{{ account.description }}" onkeyup="enableSubmit();"
+                            onchange="enableSubmit();" onblur="enableSubmit();">
                     </div>
                 </td>
             </tr>
@@ -37,7 +39,8 @@ Edit Account
                 <td class="align-middle">
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="initial_amount"
-                            id="initial_amount" type="number" step="0.01" value="{{ account.initial_amount }}">
+                            id="initial_amount" type="number" step="0.01" value="{{ account.initial_amount }}"
+                            onkeyup="enableSubmit();" onchange="enableSubmit();" onblur="enableSubmit();">
                     </div>
                 </td>
             </tr>
@@ -59,4 +62,21 @@ Edit Account
     <br>
     <button class="btn btn-primary" type="submit" name="edit" id="edit" value="{{ account.id }}">Save</button>
 </form>
+<script>
+    let submit = document.querySelector("#edit");
+
+    function enableSubmit() {
+        let name = document.querySelector("#name").value
+        let description = document.querySelector("#description").value
+        let initial_amount = document.querySelector("#initial_amount").value
+
+        if (name && description && initial_amount) {
+
+            submit.disabled = false;
+        }
+        else {
+            submit.disabled = true;
+        }
+    }
+</script>
 {% endblock %}

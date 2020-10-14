@@ -102,19 +102,54 @@ def index():
     with app.app_context():
         user = User.query.filter_by(id=session["user_id"]).scalar()
 
-        entries = (
+        expense_entries = (
             db.session.query(
                 (Category.name).label("category_name"),
                 (Account.name).label("account_name"),
+                (Category.budget_amount).label("budget_amount"),
                 func.sum(Entry.amount).label("amount"),
             )
             .join(Entry.category)
             .join(Category.account)
+            .join(Category.category_type)
             .filter(Account.user_id == session["user_id"])
+            .filter(CategoryType.name == "Expense")
             .group_by(Category.id)
         )
 
-    return render_template("index.html", username=user.username, entries=entries)
+        expense_amount = (
+            db.session.query(
+                func.sum(Entry.amount).label("amount"),
+            )
+            .join(Entry.category)
+            .join(Category.account)
+            .join(Category.category_type)
+            .filter(Account.user_id == session["user_id"])
+            .filter(CategoryType.name == "Expense")
+            .first()
+        ).amount
+
+        income_amount = (
+            db.session.query(
+                func.sum(Entry.amount).label("amount"),
+            )
+            .join(Entry.category)
+            .join(Category.account)
+            .join(Category.category_type)
+            .filter(Account.user_id == session["user_id"])
+            .filter(CategoryType.name == "Income")
+            .first()
+        ).amount
+
+        savings = income_amount - expense_amount
+
+    return render_template(
+        "index.html",
+        username=user.username,
+        entries=expense_entries,
+        savings=savings,
+        income_amount=income_amount,
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -202,7 +237,7 @@ def register():
         return render_template("register.html", alert_message=alert_message)
 
     with app.app_context():
-        check = User.query.filter_by(username=username).scalar()
+        check = User.query.filter_by(username=username).first()
 
     if check:
         return render_template("register.html", alert_message="Username already taken")
@@ -248,6 +283,7 @@ def register():
     income = Category(
         name="Income",
         description="Salary and wage income",
+        budget_amount=100,
         created_date=datetime.utcnow(),
         modified_date=datetime.utcnow(),
         user=user,
@@ -258,6 +294,7 @@ def register():
     misc = Category(
         name="Misc",
         description="Miscellaneous expense items",
+        budget_amount=100,
         created_date=datetime.utcnow(),
         modified_date=datetime.utcnow(),
         user=user,
@@ -303,6 +340,15 @@ def add_account():
     account_type_id = request.form.get("account_type")
     initial_amount = request.form.get("initial_amount")
 
+    if not name:
+        return apology("Please provide an account name")
+
+    if not description:
+        return apology("Please provide an account descriptiona")
+
+    if not initial_amount:
+        return apology("Please provide an initial amount")
+
     with app.app_context():
         account_type = AccountType.query.filter_by(id=account_type_id).scalar()
         account = Account(
@@ -347,6 +393,9 @@ def edit_account():
     name = request.form.get("name")
     description = request.form.get("description")
     initial_amount = request.form.get("initial_amount")
+
+    if not name:
+        return apology("Please provide an account name")
 
     with app.app_context():
         account = (
@@ -435,8 +484,12 @@ def add_category():
 
     name = request.form.get("name")
     description = request.form.get("description")
+    budget_amount = request.form.get("budget_amount")
     category_type_id = request.form.get("category_type")
     account_id = request.form.get("account")
+
+    if not name:
+        return apology("Please provide a category name")
 
     with app.app_context():
         category_type = CategoryType.query.filter_by(id=category_type_id).scalar()
@@ -444,6 +497,7 @@ def add_category():
         category = Category(
             name=name,
             description=description,
+            budget_amount=budget_amount,
             created_date=datetime.utcnow(),
             modified_date=datetime.utcnow(),
             user_id=session["user_id"],
@@ -480,6 +534,10 @@ def edit_category():
     name = request.form.get("name")
     description = request.form.get("description")
     account_id = request.form.get("account")
+    budget_amount = request.form.get("budget_amount")
+
+    if not name:
+        return apology("Please provide a category name")
 
     with app.app_context():
         category = (
@@ -495,6 +553,7 @@ def edit_category():
 
         category.name = name
         category.description = description
+        category.budget_amount = budget_amount
         category.category_type = category_type
         category.modified_date = datetime.utcnow()
         category.account = account
@@ -586,6 +645,9 @@ def add_entry():
     category = request.form.get("category")
     amount = request.form.get("amount")
 
+    if not amount:
+        return apology("Please provide an entry amount")
+
     with app.app_context():
         category = Category.query.filter_by(id=category).scalar()
         entry = Entry(
@@ -612,6 +674,9 @@ def edit_entry():
     entry_id = request.form.get("edit")
     amount = request.form.get("amount")
     effective_date = request.form.get("effective_date")
+
+    if not amount:
+        return apology("Please provide an entry amount")
 
     with app.app_context():
         entry = (

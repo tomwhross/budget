@@ -15,7 +15,8 @@ Add Entry
                 <td class="align-middle">
                     <div class="form-group">
                         <input autocomplete="off" autofocus class="form-control" name="amount" id="amount" type="number"
-                            step="0.01" placeholder="Amount">
+                            step="0.01" placeholder="Amount" onkeyup="enableSubmit();" onchange="enableSubmit();"
+                            onblur="enableSubmit();">
                     </div>
                 </td>
             </tr>
@@ -34,6 +35,21 @@ Add Entry
         </tbody>
     </table>
     <br>
-    <button class="btn btn-primary" type="submit" name="add" id="add">Add</button>
+    <button class="btn btn-primary" type="submit" name="add" id="add" disabled>Add</button>
 </form>
+<script>
+    let submit = document.querySelector("#add");
+
+    function enableSubmit() {
+        let amount = document.querySelector("#amount").value
+
+        if (amount) {
+
+            submit.disabled = false;
+        }
+        else {
+            submit.disabled = true;
+        }
+    }
+</script>
 {% endblock %}
