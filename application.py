@@ -152,6 +152,12 @@ def index():
             .first()
         ).amount
 
+        if not income_amount:
+            income_amount = 0
+
+        if not expense_amount:
+            expense_amount = 0
+
         savings = income_amount - expense_amount
 
     return render_template(
