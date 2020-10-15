@@ -4,7 +4,12 @@
 Home
 {% endblock %}
 
+
 {% block main %}
+<center>
+    <h1>Current Month</h1>
+</center>
+<br>
 <table class="table table-hover">
     <thead>
         <tr>
@@ -29,8 +34,11 @@ Home
             <td>{{ entry.category_name }}</td>
             <td>${{ entry.budget_amount }}</td>
             <td>${{ entry.amount }}</td>
-            <td>${{ entry.budget_amount - entry.amount }}</td>
-
+            {% if entry.budget_amount - entry.amount > 0 %}
+            <td style="color: green;">${{ entry.budget_amount - entry.amount }}</td>
+            {% else %}
+            <td style="color: red;">${{ entry.budget_amount - entry.amount }}</td>
+            {% endif %}
         </tr>
         {% endfor %}
         <tr>

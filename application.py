@@ -1,6 +1,7 @@
 import os
 
 from datetime import datetime
+from dateutil import relativedelta
 from flask import Flask, redirect, render_template, request, session
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
@@ -102,6 +103,10 @@ def index():
     with app.app_context():
         user = User.query.filter_by(id=session["user_id"]).scalar()
 
+        today = datetime.today()
+        lower_date_bound = today.replace(day=1)
+        upper_date_bound = today + relativedelta.relativedelta(months=1, day=1)
+
         expense_entries = (
             db.session.query(
                 (Category.name).label("category_name"),
@@ -114,6 +119,8 @@ def index():
             .join(Category.category_type)
             .filter(Account.user_id == session["user_id"])
             .filter(CategoryType.name == "Expense")
+            .filter(Entry.effective_date >= lower_date_bound)
+            .filter(Entry.effective_date < upper_date_bound)
             .group_by(Category.id)
         )
 
@@ -126,6 +133,8 @@ def index():
             .join(Category.category_type)
             .filter(Account.user_id == session["user_id"])
             .filter(CategoryType.name == "Expense")
+            .filter(Entry.effective_date >= lower_date_bound)
+            .filter(Entry.effective_date < upper_date_bound)
             .first()
         ).amount
 
@@ -138,6 +147,8 @@ def index():
             .join(Category.category_type)
             .filter(Account.user_id == session["user_id"])
             .filter(CategoryType.name == "Income")
+            .filter(Entry.effective_date >= lower_date_bound)
+            .filter(Entry.effective_date < upper_date_bound)
             .first()
         ).amount
 
@@ -644,6 +655,7 @@ def add_entry():
 
     category = request.form.get("category")
     amount = request.form.get("amount")
+    description = request.form.get("description")
 
     if not amount:
         return apology("Please provide an entry amount")
@@ -651,7 +663,7 @@ def add_entry():
     with app.app_context():
         category = Category.query.filter_by(id=category).scalar()
         entry = Entry(
-            description="description",
+            description=description,
             amount=amount,
             created_date=datetime.utcnow(),
             modified_date=datetime.utcnow(),
@@ -673,7 +685,11 @@ def edit_entry():
     """
     entry_id = request.form.get("edit")
     amount = request.form.get("amount")
-    effective_date = request.form.get("effective_date")
+    category = request.form.get("category")
+    description = request.form.get("description")
+    effective_date = datetime.strptime(
+        request.form.get("effective_date"), "%Y-%m-%d %H:%M:%S.%f"
+    )
 
     if not amount:
         return apology("Please provide an entry amount")
@@ -687,6 +703,8 @@ def edit_entry():
         )
 
         entry.amount = amount
+        entry.category_id = category
+        entry.description = description
         entry.effective_date = effective_date
         entry.modified_date = datetime.utcnow()
         db.session.commit()
@@ -709,6 +727,7 @@ def manage_entries():
             entries = (
                 Entry.query.options(joinedload("category"))
                 .filter(Entry.user_id == session["user_id"])
+                .order_by(Entry.effective_date.desc())
                 .all()
             )
             # categories = Category.query.options(joinedload('category_type')).all()
@@ -722,19 +741,19 @@ def manage_entries():
         )
 
     if request.method == "POST":
-        category_id = request.form.get("edit")
+        entry_id = request.form.get("edit")
         with app.app_context():
-            category = (
-                Category.query.options(joinedload("category_type"))
-                .filter(Category.user_id == session["user_id"])
-                .filter(Category.id == category_id)
+            entry = (
+                Entry.query.options(joinedload("category"))
+                .filter(Entry.user_id == session["user_id"])
+                .filter(Entry.id == entry_id)
                 .scalar()
             )
-            category_types = CategoryType.query.all()
+            categories = Category.query.all()
 
         return render_template(
-            "edit_category.html",
+            "edit_entry.html",
             username=user.username,
-            category=category,
-            category_types=category_types,
+            entry=entry,
+            categories=categories,
         )

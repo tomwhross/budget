@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Edit Entry
+{% endblock %}
+
+{% block main %}
+<form action="/edit_entry" method="post">
+    <table class="table">
+        <thead>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="align-middle">Category</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <select id="category" name="category">
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if entry.category.name==category.name %}
+                                selected="selected" {% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Description</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="description" id="description"
+                            type="text" value="{{ entry.description }}">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Amount</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="amount" id="amount" type="number"
+                            step="0.01" value="{{ entry.amount }}" onkeyup="enableSubmit();" onchange="enableSubmit();"
+                            onblur="enableSubmit();">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle">Effective Date</td>
+                <td class="align-middle">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus class="form-control" name="effective_date"
+                            id="effective_date" type="text" value="{{ entry.effective_date }}" onkeyup="enableSubmit();"
+                            onchange="enableSubmit();" onblur="enableSubmit();">
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <br>
+    <button class="btn btn-primary" type="submit" name="edit" id="edit" value="{{ entry.id }}">Save</button>
+</form>
+<script>
+    let submit = document.querySelector("#edit");
+
+    function enableSubmit() {
+        let amount = document.querySelector("#amount").value
+        let effective_date = document.querySelector("#effective_date").value
+
+        if (amount && effective_date) {
+
+            submit.disabled = false;
+        }
+        else {
+            submit.disabled = true;
+        }
+    }
+
+    enableSubmit();
+</script>
+{% endblock %}
