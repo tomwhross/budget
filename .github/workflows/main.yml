@@ -20,7 +20,7 @@ jobs:
     - name: Get the write-good output
       run: echo "${{ steps.write-good.outputs.result }}"
     - name: Post comment
-      uses: mshick/add-pr-comment@v1
+      uses: mshick/add-pr-comment@v2
       with:
         message: |
           Here are some friendly warnings from [`write-good`](https://github.com/btford/write-good):
