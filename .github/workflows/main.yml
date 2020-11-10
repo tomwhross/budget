@@ -14,7 +14,7 @@ jobs:
     steps:
     - name: write-good action step
       id: write-good
-      uses: actions/write-good@v1
+      uses: tomwhross/write-good@v1
     # Use the output from the `write-good` step
     - name: Get the write-good output
       run: echo "${{ steps.write-good.outputs.result }}"
