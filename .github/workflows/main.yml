@@ -1,0 +1,24 @@
+jobs:
+  write_good_job:
+    runs-on: ubuntu-latest
+    name: A job to lint Markdown files
+    steps:
+    - name: write-good action step
+      id: write-good
+      uses: actions/write-good@v1
+    # Use the output from the `write-good` step
+    - name: Get the write-good output
+      run: echo "${{ steps.write-good.outputs.result }}"
+    - name: Post comment
+      uses: mshick/add-pr-comment@v1
+      with:
+        message: |
+          Here are some friendly warnings from [`write-good`](https://github.com/btford/write-good):
+
+          ```
+          ${{ steps.hello.outputs.result }}
+          ```
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        repo-token-user-login: 'github-actions[bot]' # The user.login for temporary GitHub tokens
+        allow-repeats: false # This is the default
+
