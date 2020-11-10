@@ -26,7 +26,7 @@ jobs:
           Here are some friendly warnings from [`write-good`](https://github.com/btford/write-good):
 
           ```
-          ${{ steps.hello.outputs.result }}
+          ${{ steps.write-good.outputs.result }}
           ```
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' # The user.login for temporary GitHub tokens
